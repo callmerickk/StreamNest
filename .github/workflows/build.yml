@@ -5,7 +5,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: unzip -q StreamNest.zip
+        with:
+          fetch-depth: 0
+      - name: Unzip the newest uploaded zip
+        run: |
+          ZIP=$(git log -1 --format= --name-only --diff-filter=AM -- '*.zip' | head -1)
+          echo "Building from: $ZIP"
+          rm -rf StreamNest
+          unzip -q -o "$ZIP"
       - uses: actions/setup-java@v5
         with:
           distribution: temurin
