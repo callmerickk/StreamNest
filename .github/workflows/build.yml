@@ -1,5 +1,8 @@
 name: Build APK
 on: workflow_dispatch
+# Needed to publish the APKs as a GitHub Release (the apps' in-app updater downloads from there).
+permissions:
+  contents: write
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -36,3 +39,29 @@ jobs:
           name: StreamX-TV-apk
           path: StreamNest/app/build/outputs/apk/tv/debug/*.apk
           if-no-files-found: ignore
+      # In-app updates: both APKs + versions.json as a GitHub Release.
+      - name: Prepare release files
+        run: |
+          mkdir -p release
+          cp StreamNest/app/build/outputs/apk/phone/debug/*.apk release/StreamX-phone.apk
+          cp StreamNest/app/build/outputs/apk/tv/debug/*.apk release/StreamX-TV.apk
+          G=StreamNest/app/build.gradle.kts
+          PHONE_CODE=$(grep 'versionCode = ' $G | sed -n 1p | grep -o '[0-9]\+')
+          TV_CODE=$(grep 'versionCode = ' $G | sed -n 2p | grep -o '[0-9]\+')
+          PHONE_NAME=$(grep 'versionName = ' $G | sed -n 1p | sed 's/.*"\(.*\)".*/\1/')
+          TV_NAME=$(grep 'versionName = ' $G | sed -n 2p | sed 's/.*"\(.*\)".*/\1/')
+          echo "{\"phone\":$PHONE_CODE,\"tv\":$TV_CODE,\"phoneName\":\"$PHONE_NAME\",\"tvName\":\"$TV_NAME\"}" > release/versions.json
+          cat release/versions.json
+          echo "TAG=build-${{ github.run_number }}" >> $GITHUB_ENV
+          echo "TITLE=StreamX $PHONE_NAME · $TV_NAME" >> $GITHUB_ENV
+          if [ -f StreamNest/RELEASE_NOTES.md ]; then cp StreamNest/RELEASE_NOTES.md release/notes.md; else echo "Fixes and improvements." > release/notes.md; fi
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.TAG }}
+          name: ${{ env.TITLE }}
+          body_path: release/notes.md
+          make_latest: true
+          files: |
+            release/StreamX-phone.apk
+            release/StreamX-TV.apk
+            release/versions.json
