@@ -24,7 +24,22 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: "8.9"
-      - run: cd StreamNest && gradle assembleDebug --no-daemon
+      - name: Build
+        run: |
+          cd StreamNest
+          set -o pipefail
+          gradle assembleDebug --no-daemon 2>&1 | tee ../build.log
+      # On failure: the compiler's error lines become annotations (readable through the GitHub API).
+      - name: Report errors
+        if: failure()
+        run: |
+          grep -E "^e: |What went wrong|Could not (find|resolve)|> " build.log | grep -v "^> Task" | head -60 > errs.txt || true
+          sed -i 's/%/%25/g' errs.txt
+          for chunk in 0 20 40; do
+            msg=$(sed -n "$((chunk+1)),$((chunk+20))p" errs.txt | awk 'BEGIN{ORS="%0A"}{print}')
+            [ -n "$msg" ] && echo "::error title=Build errors $chunk::$msg"
+          done
+          true
       # Phone app
       - uses: actions/upload-artifact@v4
         with:
