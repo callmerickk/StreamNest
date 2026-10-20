@@ -30,6 +30,13 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: "8.9"
+      - name: Nuvio runtime libraries (cheerio, crypto-js)
+        run: |
+          if [ -d StreamNest/tools/nuvio ]; then
+            cd StreamNest/tools/nuvio && npm install --no-audit --no-fund --silent
+            mkdir -p ../../app/src/main/assets/nuvio
+            npx esbuild entry.js --bundle --minify --platform=browser --format=iife --outfile=../../app/src/main/assets/nuvio/libs.js
+          fi
       - name: Build
         run: |
           cd StreamNest
