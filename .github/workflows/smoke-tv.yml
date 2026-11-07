@@ -30,7 +30,7 @@ jobs:
             npx esbuild entry.js --bundle --minify --platform=browser --format=iife --outfile=../../app/src/main/assets/nuvio/libs.js
           fi
       - name: Build
-        run: cd StreamNest && gradle assembleTvDebug --no-daemon -q
+        run: cd StreamNest && gradle assembleTvDebug -PsmokeX86 --no-daemon -q
       - name: Enable KVM
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
