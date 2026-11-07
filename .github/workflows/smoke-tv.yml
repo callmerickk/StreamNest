@@ -1,0 +1,56 @@
+name: Smoke test TV
+on:
+  workflow_dispatch:
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Unzip the newest uploaded zip
+        run: |
+          ZIP=$(git log -1 --format= --name-only --diff-filter=AM -- '*.zip' | head -1)
+          echo "Building from: $ZIP"
+          rm -rf StreamNest
+          unzip -q -o "$ZIP"
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 17
+      - run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.9"
+      - name: Nuvio runtime libraries
+        run: |
+          if [ -d StreamNest/tools/nuvio ]; then
+            cd StreamNest/tools/nuvio && npm install --no-audit --no-fund --silent
+            mkdir -p ../../app/src/main/assets/nuvio
+            npx esbuild entry.js --bundle --minify --platform=browser --format=iife --outfile=../../app/src/main/assets/nuvio/libs.js
+          fi
+      - name: Build
+        run: cd StreamNest && gradle assembleTvDebug --no-daemon -q
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules && sudo udevadm trigger --name-match=kvm
+      - name: Launch on emulator and collect the crash
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
+          script: |
+            adb install -r StreamNest/app/build/outputs/apk/tv/debug/*.apk
+            adb logcat -c
+            adb shell am start -n com.example.streamnest.tv/com.example.streamnest.MainActivity
+            sleep 25; for k in 20 20 22 22 22 21 19 19 22 22; do adb shell input keyevent $k; sleep 1; done; sleep 8
+            adb logcat -d -b crash > crash.txt || true
+            adb shell pidof com.example.streamnest.tv > pid.txt || true
+            { echo "running pid: $(cat pid.txt)"; echo "== causes:"; grep -E "Caused by|Exception:|Error:" crash.txt | head -12; echo "== crash:"; head -40 crash.txt; echo "----"; } > report.txt
+            cat report.txt
+            msg=$(head -70 report.txt | sed 's/%/%25/g' | awk 'BEGIN{ORS="%0A"}{print}')
+            echo "::warning title=Smoke::$msg"
+            ls -la StreamNest/app/build/outputs/apk/tv/debug/ | tail -2
