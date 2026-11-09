@@ -43,13 +43,14 @@ jobs:
           target: google_apis
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
           script: |
+            unzip -l StreamNest/app/build/outputs/apk/tv/debug/*.apk | grep -E "\.so$" | awk '{print $4}' | grep -iE "ffmpeg|nextlib|avcodec" > libs.txt || true
             adb install -r StreamNest/app/build/outputs/apk/tv/debug/*.apk
             adb logcat -c
             adb shell am start -n com.example.streamnest.tv/com.example.streamnest.MainActivity
             sleep 25; for k in 20 20 22 22 22 21 19 19 22 22; do adb shell input keyevent $k; sleep 1; done; sleep 8
             adb logcat -d -b crash > crash.txt || true
             adb shell pidof com.example.streamnest.tv > pid.txt || true
-            { echo "running pid: $(cat pid.txt)"; echo "== causes:"; grep -E "Caused by|Exception:|Error:" crash.txt | head -12; echo "== crash:"; head -40 crash.txt; echo "----"; } > report.txt
+            { echo "running pid: $(cat pid.txt)"; echo "== libs:"; cat libs.txt; echo "== causes:"; grep -E "Caused by|Exception:|Error:" crash.txt | head -12; echo "== crash:"; head -40 crash.txt; echo "----"; } > report.txt
             cat report.txt
             msg=$(head -70 report.txt | sed 's/%/%25/g' | awk 'BEGIN{ORS="%0A"}{print}')
             echo "::warning title=Smoke::$msg"
