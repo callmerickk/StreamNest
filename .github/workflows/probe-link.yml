@@ -1,0 +1,38 @@
+name: Probe TV link
+on: workflow_dispatch
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Probe
+        run: |
+          K=AIzaSyCO9LSPvlSVMYBA0E9Z7M9yTg8Dg1zyUns
+          D=https://streamx-d976a-default-rtdb.asia-southeast1.firebasedatabase.app
+          ID=$(head -c 12 /dev/urandom | od -An -tx1 | tr -d ' \n')
+          echo "== signUp (email)"
+          R=$(curl -s -X POST -H 'Content-Type: application/json' -d "{\"email\":\"tv-$ID@link.streamx.tv\",\"password\":\"${ID}Zx9!\",\"returnSecureToken\":true}" "https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=$K")
+          echo "$R" | jq -c '{localId, error}' 
+          T=$(echo "$R" | jq -r .idToken); U=$(echo "$R" | jq -r .localId)
+          echo "== signUp (anonymous)"
+          A=$(curl -s -X POST -H 'Content-Type: application/json' -d '{"returnSecureToken":true}' "https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=$K")
+          echo "$A" | jq -c '{localId, error}'
+          AT=$(echo "$A" | jq -r .idToken)
+          for tok in "$T" "$AT"; do
+            [ "$tok" = null ] && continue
+            echo "== PUT shares/TV000000 with token"
+            curl -s -X PUT -d '{"data":"tvlink:x","at":1,"by":"x"}' "$D/shares/TVPROBE1.json?auth=$tok"; echo
+            curl -s -X DELETE "$D/shares/TVPROBE1.json?auth=$tok"; echo
+            echo "== GET invites/<self>"
+            U2=$(curl -s -X POST -H 'Content-Type: application/json' -d "{\"idToken\":\"$tok\"}" "https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=$K" | jq -r '.users[0].localId')
+            curl -s "$D/invites/$U2.json?auth=$tok"; echo
+            echo "== PUT users/<self>/probe"
+            curl -s -X PUT -d '1' "$D/users/$U2/probe.json?auth=$tok"; echo
+            curl -s -X DELETE "$D/users/$U2/probe.json?auth=$tok"; echo
+            echo "== PUT rooms/PROBE"
+            curl -s -X PUT -d '{"a":1}' "$D/rooms/PROBEX.json?auth=$tok"; echo
+            curl -s -X DELETE "$D/rooms/PROBEX.json?auth=$tok"; echo
+            echo "== delete account"
+            curl -s -X POST -H 'Content-Type: application/json' -d "{\"idToken\":\"$tok\"}" "https://identitytoolkit.googleapis.com/v1/accounts:delete?key=$K" | head -c 200; echo
+          done
