@@ -19,3 +19,7 @@
 - CNC search with the English / original title (Netflix failed on "कृष ३").
 - Saved-link resume that hangs with no picture and no error (Young Sheldon S1E1, 0.8.8 log 12:56) → time out after
   8 s and find another link.
+- Sign out on TV: the "Sign out?" pop-up (PremiumAlert, CloudScreens) gets no remote focus — TV gets its own
+  pop-up with Cancel / Sign out focused and reachable (same for other PremiumAlert pop-ups on TV).
+- Logs must never be lost: send the log to the cloud right before sign-out and on Exit; while signed out keep the
+  lines (and any crash) on the device and send them after the next sign-in; on a crash, try to send it at once.
