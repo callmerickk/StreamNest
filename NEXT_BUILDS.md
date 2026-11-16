@@ -45,3 +45,9 @@
   and by service (Netflix/Prime/Hotstar copy of a film TMDB doesn't list on that service in India = cam). Clean copy
   first; cam only if nothing else. While a cam plays, keep looking; a clean copy found later fades in at the same
   frame (phone: two-player fade, no break; TV: kept frame + short sound gap).
+- Update 17 Nov (replaces the cinema pop-up idea above): the title page already looks for streams, and 4K HDHUB
+  usually answers before VegaMovies — so when Play is pressed and a clean (non-cam) copy is already found, it just
+  plays, no pop-up. Only when nothing clean is found: show the "In cinemas only" pop-up (Remind me · Play cinema copy
+  · Close). A clean copy found later while the cam plays: fade in at the same frame if the lengths match; if they
+  don't, match the frame with cheap low-resolution thumbnails over a wider window, lock there and fade; if no
+  confident match, show an "Upgrade to HD" button instead. Never a loading screen; must be quick.
