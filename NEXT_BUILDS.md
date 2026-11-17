@@ -51,3 +51,7 @@
   · Close). A clean copy found later while the cam plays: fade in at the same frame if the lengths match; if they
   don't, match the frame with cheap low-resolution thumbnails over a wider window, lock there and fade; if no
   confident match, show an "Upgrade to HD" button instead. Never a loading screen; must be quick.
+
+## Agreed 17 Nov — StreamX + Xstream next updates
+- First sign-in: remove the "This account has no profiles saved yet" screen. If the account has no profiles, make one
+  from the account name and go straight to the profile picker.
