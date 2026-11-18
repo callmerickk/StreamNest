@@ -55,3 +55,16 @@
 ## Agreed 17 Nov — StreamX + Xstream next updates
 - First sign-in: remove the "This account has no profiles saved yet" screen. If the account has no profiles, make one
   from the account name and go straight to the profile picker.
+
+## Agreed 18 Nov — StreamX phone + TV, Xstream, Xstream Live
+- Seek preview thumbnails per TITLE (not per link): taken cheaply from the quick HLS / MovieBox stream (I-frame track when
+  there is one, else lowest variant) at a 10 s spacing, with a crossfade so dragging / ±10 s looks like motion. Kept when
+  playback upgrades to VegaMovies / MKV / Live server. Same length (±1 %) → used as is; small difference → scaled to the
+  new length + start offset found by matching 1–2 frames; very different (extended cut) → approximate. Saved per title /
+  episode on the device (rewatch = no data). Downloads pause while buffering/seeking; capped on mobile data.
+- Next episode ready: at ~70 % find the next episode's best link, at ~75 % a paused hidden player loads its first
+  8–10 s (from the start or its resume point); Next episode swaps instantly. Dropped if unused; link re-checked on press.
+  TV: save the first 10 s to storage instead of a second player.
+- Live-server lessons for Quick Play: remember link searches on the device (respect expiry), Home look-ahead (hero,
+  Continue, Top 10; 2 at a time), instant green from a remembered link after a 0.1–0.3 s check, 1 s start / 1.5 s after
+  seek + keyframe seeks, no hidden swap player, no start-up plugin warm-up.
