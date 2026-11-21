@@ -96,3 +96,15 @@ jobs:
             release/StreamX-TV.apk
             release/versions.json
             release/notes.md
+      # Second copy on GitHub's ordinary file server ("downloads" branch, raw.githubusercontent.com). On some networks
+      # (e.g. Airtel without a VPN) the release file server is very slow; StreamX PC and the apps race both copies.
+      - name: Mirror the APKs to the downloads branch
+        if: ${{ inputs.publish }}
+        run: |
+          cd release
+          git init -q -b downloads
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add StreamX-phone.apk StreamX-TV.apk versions.json
+          git commit -qm "${{ env.TAG }}"
+          git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" downloads
